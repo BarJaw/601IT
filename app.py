@@ -1,4 +1,5 @@
 import boto3
+from prettyprinter import pprint
 from utils.login import get_sso_session
 
 
