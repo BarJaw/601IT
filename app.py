@@ -15,10 +15,13 @@ from utils.pe_events import (
     PE_CreatePolicyVersion,
     PE_AttachUserPolicy,
 )
+from utils.persistance_events import (
+    SEC_GRP_PERSISTANCE_EVENTS,
+)
 
 
 DEFAULT_CONFIG = boto3.session.Config(
-    region_name='us-east-1'
+    region_name='eu-central-1'
 )
 
 
@@ -118,6 +121,11 @@ def check_AttachUserPolicy_pe(events: list) -> bool:
     return False
 
 
+def check_security_group_persistance(events: list) -> bool:
+    for event in events:
+        if event['EventName'] in SEC_GRP_PERSISTANCE_EVENTS:
+            return True
+    return False
 
 def main():
     """
@@ -125,27 +133,29 @@ def main():
     """
     session = get_sso_session(profile_name='Admin-pot')
     events = get_event_history_for_user(session, 'Pacu_token')
-    ec2_enumeration = check_ec2_enumeration(events)
-    ecr_enumeration = check_ecr_enumeration(events)
-    ecs_enumeration = check_ecs_enumeration(events)
-    eks_enumeration = check_eks_enumeration(events)
-    dynamodb_enumeration = check_dynamodb_enumeration(events)
-    lambda_enumeration = check_lambda_enumeration(events)
-    cloudtrail_event_history_downloaded = check_cloudtrail_event_history_download(events)
-    waf_enumeration = check_waf_enumeration(events)
-    CreatePolicyVersion_pe = check_CreatePolicyVersion_pe(events)
-    AttachUserPolicy_pe = check_AttachUserPolicy_pe(events)
+    # ec2_enumeration = check_ec2_enumeration(events)
+    # ecr_enumeration = check_ecr_enumeration(events)
+    # ecs_enumeration = check_ecs_enumeration(events)
+    # eks_enumeration = check_eks_enumeration(events)
+    # dynamodb_enumeration = check_dynamodb_enumeration(events)
+    # lambda_enumeration = check_lambda_enumeration(events)
+    # cloudtrail_event_history_downloaded = check_cloudtrail_event_history_download(events)
+    # waf_enumeration = check_waf_enumeration(events)
+    # CreatePolicyVersion_pe = check_CreatePolicyVersion_pe(events)
+    # AttachUserPolicy_pe = check_AttachUserPolicy_pe(events)
+    security_group_persistance = check_security_group_persistance(events)
     
-    print(f'ec2_enumeration: {ec2_enumeration}')
-    print(f'ecr_enumeration: {ecr_enumeration}')
-    print(f'ecs_enumeration: {ecs_enumeration}')
-    print(f'eks_enumeration: {eks_enumeration}')
-    print(f'dynamodb_enumeration: {dynamodb_enumeration}')
-    print(f'lambda_enumeration: {lambda_enumeration}')
-    print(f'cloudtrail_event_history_downloaded: {cloudtrail_event_history_downloaded}')
-    print(f'waf_enumeration: {waf_enumeration}')
-    print(f'Privilige escalation attempt using CreatePolicyVersion api call: {CreatePolicyVersion_pe}')
-    print(f'Privilige escalation attempt using AttachUserPolicy api call: {AttachUserPolicy_pe}')
+    # print(f'ec2_enumeration: {ec2_enumeration}')
+    # print(f'ecr_enumeration: {ecr_enumeration}')
+    # print(f'ecs_enumeration: {ecs_enumeration}')
+    # print(f'eks_enumeration: {eks_enumeration}')
+    # print(f'dynamodb_enumeration: {dynamodb_enumeration}')
+    # print(f'lambda_enumeration: {lambda_enumeration}')
+    # print(f'cloudtrail_event_history_downloaded: {cloudtrail_event_history_downloaded}')
+    # print(f'waf_enumeration: {waf_enumeration}')
+    # print(f'Privilige escalation attempt using CreatePolicyVersion api call: {CreatePolicyVersion_pe}')
+    # print(f'Privilige escalation attempt using AttachUserPolicy api call: {AttachUserPolicy_pe}')
+    print(f'security_group_persistance: {security_group_persistance}')
     # for event in events:
     #     print(event['EventName'])
 
