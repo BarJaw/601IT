@@ -1,5 +1,7 @@
 from datetime import datetime
+import argparse
 import boto3
+from utils.banner import banner
 from utils.login import get_sso_session
 from utils.enumeration_events import (
     EC2_ENUM_EVENTS,
@@ -19,27 +21,23 @@ from utils.persistance_events import (
     SEC_GRP_PERSISTANCE_EVENTS,
 )
 
-
-DEFAULT_CONFIG = boto3.session.Config(
-    region_name='eu-central-1'
-)
-
-
-def get_event_history_for_user(session: boto3.session.Session, username: str) -> list[dict]:
+def get_event_history_for_user(session: boto3.session.Session, args) -> list[dict]:
     events = []
-    cloudtrail_client = session.client('cloudtrail', config=DEFAULT_CONFIG)
-    iterator = cloudtrail_client.get_paginator('lookup_events').paginate(
-        LookupAttributes=[
-            {
-                'AttributeKey': 'Username',
-                'AttributeValue': username,
-            },
-        ],
-        # StartTime=datetime(2024, 12, 2),
-        # EndTime=datetime(2024, 12, 2),
-    )
-    for response in iterator:
-        events.extend(response.get('Events'))
+    for region in args.regions:
+        config = boto3.session.Config(region_name=region)
+        cloudtrail_client = session.client('cloudtrail', config=config)
+        iterator = cloudtrail_client.get_paginator('lookup_events').paginate(
+            LookupAttributes=[
+                {
+                    'AttributeKey': 'Username',
+                    'AttributeValue': args.token,
+                },
+            ],
+            # StartTime=datetime(2024, 12, 2),
+            # EndTime=datetime(2024, 12, 2),
+        )
+        for response in iterator:
+            events.extend(response.get('Events'))
     return events
 
 
@@ -128,36 +126,56 @@ def check_security_group_persistance(events: list) -> bool:
     return False
 
 def main():
-    """
-    Main function
-    """
-    session = get_sso_session(profile_name='Admin-pot')
-    events = get_event_history_for_user(session, 'Pacu_token')
-    # ec2_enumeration = check_ec2_enumeration(events)
-    # ecr_enumeration = check_ecr_enumeration(events)
-    # ecs_enumeration = check_ecs_enumeration(events)
-    # eks_enumeration = check_eks_enumeration(events)
-    # dynamodb_enumeration = check_dynamodb_enumeration(events)
-    # lambda_enumeration = check_lambda_enumeration(events)
-    # cloudtrail_event_history_downloaded = check_cloudtrail_event_history_download(events)
-    # waf_enumeration = check_waf_enumeration(events)
-    # CreatePolicyVersion_pe = check_CreatePolicyVersion_pe(events)
-    # AttachUserPolicy_pe = check_AttachUserPolicy_pe(events)
+    banner()
+    parser = argparse.ArgumentParser(description='Parse command-line arguments for regions, audit role, and token username.')
+    parser.add_argument(
+        '--regions', '-r',
+        type=lambda s: s.split(','),
+        required=True,
+        help='Comma-separated list of regions (e.g. us-east-1,eu-central-1). If you want\
+            to check IAM-related actions (e.g. privilege escalation),\
+            include the us-east-1 region.'
+    )
+    parser.add_argument(
+        '--profile', '-p',
+        type=str,
+        required=True,
+        help='SSO profile with permissions to read CloudTrail event history.'
+    )
+    parser.add_argument(
+        '--token', '-t',
+        type=str,
+        required=True,
+        help='The honeytoken username.'
+    )
+    args = parser.parse_args()
+    
+    session = get_sso_session(profile_name=args.profile)
+    events = get_event_history_for_user(session, args)
+    ec2_enumeration = check_ec2_enumeration(events)
+    ecr_enumeration = check_ecr_enumeration(events)
+    ecs_enumeration = check_ecs_enumeration(events)
+    eks_enumeration = check_eks_enumeration(events)
+    dynamodb_enumeration = check_dynamodb_enumeration(events)
+    lambda_enumeration = check_lambda_enumeration(events)
+    cloudtrail_event_history_downloaded = check_cloudtrail_event_history_download(events)
+    waf_enumeration = check_waf_enumeration(events)
+    create_policy_version_pe = check_CreatePolicyVersion_pe(events)
+    attach_user_policy_pe = check_AttachUserPolicy_pe(events)
     security_group_persistance = check_security_group_persistance(events)
     
-    # print(f'ec2_enumeration: {ec2_enumeration}')
-    # print(f'ecr_enumeration: {ecr_enumeration}')
-    # print(f'ecs_enumeration: {ecs_enumeration}')
-    # print(f'eks_enumeration: {eks_enumeration}')
-    # print(f'dynamodb_enumeration: {dynamodb_enumeration}')
-    # print(f'lambda_enumeration: {lambda_enumeration}')
-    # print(f'cloudtrail_event_history_downloaded: {cloudtrail_event_history_downloaded}')
-    # print(f'waf_enumeration: {waf_enumeration}')
-    # print(f'Privilige escalation attempt using CreatePolicyVersion api call: {CreatePolicyVersion_pe}')
-    # print(f'Privilige escalation attempt using AttachUserPolicy api call: {AttachUserPolicy_pe}')
+    print(f'ec2_enumeration: {ec2_enumeration}')
+    print(f'ecr_enumeration: {ecr_enumeration}')
+    print(f'ecs_enumeration: {ecs_enumeration}')
+    print(f'eks_enumeration: {eks_enumeration}')
+    print(f'dynamodb_enumeration: {dynamodb_enumeration}')
+    print(f'lambda_enumeration: {lambda_enumeration}')
+    print(f'cloudtrail_event_history_downloaded: {cloudtrail_event_history_downloaded}')
+    print(f'waf_enumeration: {waf_enumeration}')
+    print(f'Privilige escalation attempt using CreatePolicyVersion api call: {create_policy_version_pe}')
+    print(f'Privilige escalation attempt using AttachUserPolicy api call: {attach_user_policy_pe}')
     print(f'security_group_persistance: {security_group_persistance}')
-    # for event in events:
-    #     print(event['EventName'])
+
 
 if __name__ == '__main__':
     main()
