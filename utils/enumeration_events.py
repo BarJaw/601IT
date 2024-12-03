@@ -36,3 +36,23 @@ LAMBDA_ENUM_EVENTS = (
     'ListFunctions20150331',
     'GetAccountSettings20160819',
 )
+
+WAF_ENUM_EVENTS = (
+    'ListXssMatchSets',
+    'ListSubscribedRuleGroups',
+    'ListWebACLs',
+    'ListByteMatchSets',
+    'ListSizeConstraintSets',
+    'ListIPSets',
+    'ListRules',
+    'ListRateBasedRules',
+    'ListRuleGroups',
+    'ListGeoMatchSets',
+    'ListRegexMatchSets',
+    'ListSqlInjectionMatchSets',
+    'ListRegexPatternSets',
+)
+
+CLOUDTRAIL_EVENT_HISTORY_DOWNLOAD_EVENTS = (
+    'LookupEvents',
+)
