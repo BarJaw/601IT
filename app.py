@@ -33,12 +33,21 @@ def get_event_history_for_user(session: boto3.session.Session, args) -> list[dic
                     'AttributeValue': args.token,
                 },
             ],
-            # StartTime=datetime(2024, 12, 2),
-            # EndTime=datetime(2024, 12, 2),
+            StartTime=args.start_time,
+            EndTime=args.end_time,
         )
         for response in iterator:
             events.extend(response.get('Events'))
     return events
+
+
+def parse_datetime(dt_str):
+    try:
+        return datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S")
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Invalid datetime format: '{dt_str}'. Expected format is 'YYYY-MM-DDTHH:MM:SS'."
+        )
 
 
 def check_ec2_enumeration(events: list) -> bool:
@@ -148,8 +157,20 @@ def main():
         required=True,
         help='The honeytoken username.'
     )
+    parser.add_argument(
+        '--start-time', '-s',
+        type=parse_datetime,
+        required=True,
+        help="Start time in ISO 8601 format (e.g., 2024-12-03T10:30:00)."
+    )
+    parser.add_argument(
+        '--end-time', '-e',
+        type=parse_datetime,
+        required=True,
+        help="End time in ISO 8601 format (e.g., 2024-12-03T12:30:00)."
+    )
+
     args = parser.parse_args()
-    
     session = get_sso_session(profile_name=args.profile)
     events = get_event_history_for_user(session, args)
     ec2_enumeration = check_ec2_enumeration(events)
