@@ -136,7 +136,7 @@ def check_security_group_persistance(events: list) -> bool:
 
 def main():
     banner()
-    parser = argparse.ArgumentParser(description='Parse command-line arguments for regions, audit role, and token username.')
+    parser = argparse.ArgumentParser(description='Parse command-line arguments for regions, audit role, token username, start and end time')
     parser.add_argument(
         '--regions', '-r',
         type=lambda s: s.split(','),

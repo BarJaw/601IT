@@ -21,8 +21,8 @@ This project is designed to analyze AWS CloudTrail event history for specific en
 ## Usage
 1. Run the application:
     ```sh
-    python app.py
-    ```
+    python app.py --regions REGIONS --profile PROFILE --token TOKEN --start-time START_TIME --end-time END_TIME
+
 2. The application will prompt you to log in using AWS SSO and will retrieve the event history for the specified user.
 
 
